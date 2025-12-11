@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Registros de Score</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 45%, #020617 100%);
+      color: #e5e7eb;
+      min-height: 100vh;
+      padding: 24px;
+      box-sizing: border-box;
+      display: flex;
+      justify-content: center;
+    }
+    .wrapper {
+      width: 100%;
+      max-width: 960px;
+    }
+    header {
+      margin-bottom: 16px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      letter-spacing: 0.03em;
+    }
+    .subtitle {
+      margin-top: 4px;
+      color: #9ca3af;
+      font-size: 14px;
+    }
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+      align-items: center;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      border: 1px solid #374151;
+      background: #020617aa;
+    }
+    .pill span.dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 8px #22c55e;
+    }
+    .pill.warn span.dot {
+      background: #f97316;
+      box-shadow: 0 0 8px #f97316;
+    }
+    .actions {
+      margin-top: 16px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      background: #2563eb;
+      color: #e5e7eb;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    button.secondary {
+      background: transparent;
+      color: #9ca3af;
+      border: 1px solid #374151;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    main {
+      margin-top: 18px;
+      background: #020617bb;
+      border-radius: 14px;
+      border: 1px solid #1f2937;
+      overflow: hidden;
+      box-shadow:
+        0 24px 40px rgba(0,0,0,0.7),
+        0 0 0 1px rgba(15,23,42,0.8);
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    thead {
+      background: #020617;
+    }
+    th, td {
+      padding: 8px 12px;
+      font-size: 14px;
+      border-bottom: 1px solid #1f2937;
+      text-align: left;
+      white-space: nowrap;
+    }
+    th {
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 11px;
+    }
+    tr:nth-child(even) td {
+      background: #020617dd;
+    }
+    tr:nth-child(odd) td {
+      background: #020617;
+    }
+    .dni {
+      font-family: "Fira Code", ui-monospace;
+      font-size: 13px;
+    }
+    .score {
+      font-weight: 600;
+    }
+    .score.high {
+      color: #22c55e;
+    }
+    .score.mid {
+      color: #eab308;
+    }
+    .score.low {
+      color: #f97316;
+    }
+    .score.very-low {
+      color: #f87171;
+    }
+    .registro {
+      white-space: normal;
+      max-width: 460px;
+    }
+    .empty {
+      padding: 24px 20px;
+      text-align: center;
+      font-size: 14px;
+      color: #9ca3af;
+    }
+    .footer {
+      padding: 10px 16px;
+      font-size: 11px;
+      color: #6b7280;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #020617;
+    }
+    @media (max-width: 640px) {
+      th:nth-child(3),
+      td:nth-child(3) {
+        display: none;
+      }
+      .registro {
+        max-width: 220px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <header>
+      <h1>Dashboard – Registros de Score</h1>
+      <div class="subtitle" id="subtitle">Cargando fecha...</div>
+
+      <div class="badge-row">
+        <div class="pill" id="pill-total">
+          <span class="dot"></span>
+          <span id="total-label">0 consultas</span>
+        </div>
+        <div class="pill warn" id="pill-empty" style="display:none;">
+          <span class="dot"></span>
+          <span>Sin registros aún</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="btnRefresh">↻ Actualizar</button>
+        <button id="btnAuto" class="secondary">▶ Auto-refresco (30s)</button>
+      </div>
+    </header>
+
+    <main>
+      <table id="table" style="display:none;">
+        <thead>
+          <tr>
+            <th>DNI</th>
+            <th>Score</th>
+            <th>Registro</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+
+      <div id="empty" class="empty" style="display:none;">
+        Todavía no hay registros para hoy.<br />
+        El bot enviará datos automáticamente.
+      </div>
+
+      <div class="footer">
+        <span id="status">Listo.</span>
+        <span id="fileName"></span>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const subtitleEl = document.getElementById("subtitle");
+    const totalLabelEl = document.getElementById("total-label");
+    const pillEmptyEl = document.getElementById("pill-empty");
+    const tableEl = document.getElementById("table");
+    const tbodyEl = document.getElementById("tbody");
+    const emptyEl = document.getElementById("empty");
+    const statusEl = document.getElementById("status");
+    const fileNameEl = document.getElementById("fileName");
+    const btnRefresh = document.getElementById("btnRefresh");
+    const btnAuto = document.getElementById("btnAuto");
+
+    let autoInterval = null;
+
+    function formatToday() {
+      const now = new Date();
+      return now.toLocaleDateString("es-AR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      });
+    }
+
+    async function loadData(showSpinner = true) {
+      if (showSpinner) statusEl.textContent = "Cargando datos...";
+
+      try {
+        const resp = await fetch("/logs/today");
+        const data = await resp.json();
+        const registros = data.registros || [];
+
+        subtitleEl.textContent = "Fecha: " + formatToday();
+        totalLabelEl.textContent = registros.length + " consultas";
+        fileNameEl.textContent = data.file || "";
+
+        if (registros.length === 0) {
+          tableEl.style.display = "none";
+          emptyEl.style.display = "block";
+          pillEmptyEl.style.display = "inline-flex";
+        } else {
+          emptyEl.style.display = "none";
+          pillEmptyEl.style.display = "none";
+          tableEl.style.display = "table";
+
+          tbodyEl.innerHTML = "";
+          registros.forEach(reg => {
+            const tr = document.createElement("tr");
+
+            const tdDni = document.createElement("td");
+            tdDni.className = "dni";
+            tdDni.textContent = reg.dni;
+
+            const tdScore = document.createElement("td");
+            tdScore.className = "score";
+            tdScore.textContent = reg.score;
+
+            const tdReg = document.createElement("td");
+            tdReg.className = "registro";
+            tdReg.textContent = reg.registro;
+
+            tr.appendChild(tdDni);
+            tr.appendChild(tdScore);
+            tr.appendChild(tdReg);
+            tbodyEl.appendChild(tr);
+          });
+        }
+
+        statusEl.textContent = "Actualizado: " + new Date().toLocaleTimeString();
+
+      } catch (err) {
+        statusEl.textContent = "Error cargando datos";
+      }
+    }
+
+    btnRefresh.addEventListener("click", () => loadData(true));
+
+    btnAuto.addEventListener("click", () => {
+      if (autoInterval) {
+        clearInterval(autoInterval);
+        autoInterval = null;
+        btnAuto.textContent = "▶ Auto-refresco (30s)";
+        btnAuto.classList.add("secondary");
+      } else {
+        loadData(false);
+        autoInterval = setInterval(() => loadData(false), 30000);
+        btnAuto.textContent = "⏸ Auto-refresco ON";
+        btnAuto.classList.remove("secondary");
+      }
+    });
+
+    loadData(true);
+  </script>
+</body>
+</html>
