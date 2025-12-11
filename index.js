@@ -95,7 +95,7 @@ app.get("/dashboard", (req, res) => {
 const MAIL_USER = process.env.MAIL_USER;
 const MAIL_PASS = process.env.MAIL_PASS;
 const MAIL_TO   = process.env.MAIL_TO;
-
+const MAIL_FROM = process.env.MAIL_FROM;
 let transporter = null;
 
 if (ENABLE_EMAIL) {
@@ -127,7 +127,7 @@ cron.schedule("0 22 * * *", async () => {
 
   try {
     await transporter.sendMail({
-      from: MAIL_USER,
+      from: MAIL_FROM,
       to: MAIL_TO,
       subject: "Reporte diario de Score",
       text: "Adjunto CSV con registros de hoy.",
@@ -157,7 +157,7 @@ app.get("/test-email", async (req, res) => {
 
   try {
     await transporter.sendMail({
-      from: MAIL_USER,
+      from: MAIL_FROM,
       to: MAIL_TO,
       subject: "📊 Test API Registros Score",
       text: attachments.length
