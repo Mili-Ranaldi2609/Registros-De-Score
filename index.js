@@ -6,7 +6,7 @@ const cron = require("node-cron");
 require("dotenv").config();
 const app = express();
 app.use(express.json());
-
+const ENABLE_EMAIL = process.env.ENABLE_EMAIL === "true";
 // === Servir archivos estáticos (HTML en carpeta public) ===
 const PUBLIC_DIR = path.join(__dirname, "public");
 app.use(express.static(PUBLIC_DIR));
@@ -96,20 +96,30 @@ const MAIL_USER = process.env.MAIL_USER;
 const MAIL_PASS = process.env.MAIL_PASS;
 const MAIL_TO   = process.env.MAIL_TO;
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: MAIL_USER,
-    pass: MAIL_PASS
-  }
-});
+let transporter = null;
+
+if (ENABLE_EMAIL) {
+  transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com", 
+    port: 465,              
+    secure: true,
+    auth: {
+      user: MAIL_USER,
+      pass: MAIL_PASS
+    }
+  });
+}
 
 // === Envío diario 22:00 ===
 cron.schedule("0 22 * * *", async () => {
-  console.log("Enviando mail diario...");
+  console.log("Ejecutando tarea diaria (cron 22:00)...");
+
+  if (!ENABLE_EMAIL) {
+    console.log("ENV ENABLE_EMAIL=false → no se envía mail en este entorno.");
+    return;
+  }
 
   const filePath = getDailyFilePath();
-
   if (!fs.existsSync(filePath)) {
     console.log("No hay archivo para enviar.");
     return;
@@ -121,9 +131,7 @@ cron.schedule("0 22 * * *", async () => {
       to: MAIL_TO,
       subject: "Reporte diario de Score",
       text: "Adjunto CSV con registros de hoy.",
-      attachments: [
-        { filename: path.basename(filePath), path: filePath }
-      ]
+      attachments: [{ filename: path.basename(filePath), path: filePath }]
     });
 
     console.log("MAIL DIARIO ENVIADO ✔");
@@ -132,8 +140,16 @@ cron.schedule("0 22 * * *", async () => {
   }
 });
 
+
 // === Test de mail ===
 app.get("/test-email", async (req, res) => {
+  if (!ENABLE_EMAIL) {
+    return res.json({
+      ok: true,
+      message: "En este entorno el envío de mails está desactivado (ENABLE_EMAIL=false)."
+    });
+  }
+
   const filePath = getDailyFilePath();
   const attachments = fs.existsSync(filePath)
     ? [{ filename: path.basename(filePath), path: filePath }]
@@ -155,6 +171,7 @@ app.get("/test-email", async (req, res) => {
     res.status(500).json({ ok: false, error: err.message });
   }
 });
+
 
 /* ========================================================
    5) Crear archivo nuevo a las 23:00 si no existe
