@@ -100,9 +100,9 @@ let transporter = null;
 
 if (ENABLE_EMAIL) {
   transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com", 
-    port: 465,              
-    secure: true,
+    host: "smtp-relay.brevo.com", 
+    port: 587,              
+    secure: false,
     auth: {
       user: MAIL_USER,
       pass: MAIL_PASS
