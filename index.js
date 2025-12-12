@@ -1,8 +1,10 @@
 const express = require("express");
+const SibApiV3Sdk = require('@sendinblue/client')
 const fs = require("fs");
 const path = require("path");
 const nodemailer = require("nodemailer");
 const cron = require("node-cron");
+const BREVO_API_KEY = process.env.BREVO_API_KEY;
 require("dotenv").config();
 const app = express();
 app.use(express.json());
@@ -91,55 +93,61 @@ app.get("/dashboard", (req, res) => {
    4) EMAILS AUTOMÁTICOS
    ======================================================== */
 
-
-const MAIL_USER = process.env.MAIL_USER;
-const MAIL_PASS = process.env.MAIL_PASS;
 const MAIL_TO   = process.env.MAIL_TO;
 const MAIL_FROM = process.env.MAIL_FROM;
-let transporter = null;
+let apiInstance = null; // Reemplaza 'transporter'
 
 if (ENABLE_EMAIL) {
-  transporter = nodemailer.createTransport({
-    host: "smtp-relay.brevo.com", 
-    port: 465,              
-    secure: true,
-    auth: {
-      user: MAIL_USER,
-      pass: MAIL_PASS
+    // Inicializa el cliente API de Brevo
+    apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+    
+    // Configura la API Key que acabas de activar
+    apiInstance.setApiKey(SibApiV3Sdk.ApiKey.inHeader, BREVO_API_KEY);
+    console.log("Cliente API de Brevo inicializado.");
+}
+// Agrega esta función helper a tu código:
+function getAttachmentData(filePath) {
+    if (fs.existsSync(filePath)) {
+        return [{
+            content: fs.readFileSync(filePath).toString("base64"), // Contenido en Base64
+            name: path.basename(filePath) 
+        }];
     }
-  });
+    return [];
 }
 
 // === Envío diario 22:00 ===
 cron.schedule("0 22 * * *", async () => {
-  console.log("Ejecutando tarea diaria (cron 22:00)...");
+  console.log("Ejecutando tarea diaria (cron 22:00)...");
 
-  if (!ENABLE_EMAIL) {
-    console.log("ENV ENABLE_EMAIL=false → no se envía mail en este entorno.");
-    return;
-  }
+  if (!ENABLE_EMAIL) {
+    console.log("ENV ENABLE_EMAIL=false → no se envía mail en este entorno.");
+    return;
+  }
 
-  const filePath = getDailyFilePath();
-  if (!fs.existsSync(filePath)) {
-    console.log("No hay archivo para enviar.");
-    return;
-  }
+  const filePath = getDailyFilePath();
+  if (!fs.existsSync(filePath)) {
+   console.log("No hay archivo para enviar.");
+   return;
+  }
+  
+  try {
+    const attachmentsAPI = getAttachmentData(filePath);
 
-  try {
-    await transporter.sendMail({
-      from: MAIL_FROM,
-      to: MAIL_TO,
-      subject: "Reporte diario de Score",
-      text: "Adjunto CSV con registros de hoy.",
-      attachments: [{ filename: path.basename(filePath), path: filePath }]
-    });
+    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+    sendSmtpEmail.sender = { email: MAIL_FROM };
+    sendSmtpEmail.to = [{ email: MAIL_TO }];
+    sendSmtpEmail.subject = "Reporte diario de Score";
+    sendSmtpEmail.textContent = "Adjunto CSV con registros de hoy."; // Usamos textContent en lugar de text
+    sendSmtpEmail.attachment = attachmentsAPI;
 
-    console.log("MAIL DIARIO ENVIADO ✔");
-  } catch (err) {
-    console.error("Error enviando mail:", err.message);
-  }
+    await apiInstance.sendTransacEmail(sendSmtpEmail);
+
+    console.log("MAIL DIARIO ENVIADO (VÍA API) ✔");
+  } catch (err) {
+    console.error("Error enviando mail:", err.message);
+  }
 });
-
 
 // === Test de mail ===
 app.get("/test-email", async (req, res) => {
@@ -149,27 +157,31 @@ app.get("/test-email", async (req, res) => {
       message: "En este entorno el envío de mails está desactivado (ENABLE_EMAIL=false)."
     });
   }
-
   const filePath = getDailyFilePath();
-  const attachments = fs.existsSync(filePath)
-    ? [{ filename: path.basename(filePath), path: filePath }]
-    : [];
+    const attachmentsAPI = getAttachmentData(filePath); // Usando el helper
 
-  try {
-    await transporter.sendMail({
-      from: MAIL_FROM,
-      to: MAIL_TO,
-      subject: "📊 Test API Registros Score",
-      text: attachments.length
-        ? "Este es un correo de prueba con el CSV de hoy."
-        : "Correo de prueba: hoy aún no hay archivo.",
-      attachments
-    });
+    try {
+        const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+        
+        // 1. Remitente y Destino
+        sendSmtpEmail.sender = { email: process.env.MAIL_FROM }; // Tu email verificado
+        sendSmtpEmail.to = [{ email: process.env.MAIL_TO }];
 
-    res.json({ ok: true, message: "Mail enviado correctamente" });
-  } catch (err) {
-    res.status(500).json({ ok: false, error: err.message });
-  }
+        // 2. Contenido
+        sendSmtpEmail.subject = "📊 Test API Registros Score (API FINAL)";
+        sendSmtpEmail.textContent = attachmentsAPI.length ? "Correo de prueba vía API." : "Correo sin archivo.";
+        
+        // 3. Adjuntos
+        sendSmtpEmail.attachment = attachmentsAPI;
+
+        // ¡Llamada a la API!
+        await apiInstance.sendTransacEmail(sendSmtpEmail);
+
+        res.json({ ok: true, message: "Mail enviado correctamente (vía API de Brevo)" });
+    } catch (err) {
+        // Ahora veremos errores descriptivos de la API, no 'Connection timeout'
+        res.status(500).json({ ok: false, error: err.message });
+    }
 });
 
 
