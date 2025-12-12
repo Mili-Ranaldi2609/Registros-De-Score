@@ -134,7 +134,7 @@ cron.schedule("0 22 * * *", async () => {
     const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
     sendSmtpEmail.sender = { email: MAIL_FROM, name: "Registros Score" };
     sendSmtpEmail.to = [{ email: MAIL_TO }];
-    sendSmtpEmail.subject = "Reporte diario de Score";
+    sendSmtpEmail.subject = "📊 Reporte diario de Score 📍";
     sendSmtpEmail.textContent = "Adjunto CSV con registros de hoy.";
     if (attachmentsAPI.length > 0) {
       sendSmtpEmail.attachment = attachmentsAPI;
