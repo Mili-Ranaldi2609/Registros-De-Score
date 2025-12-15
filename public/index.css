@@ -9,8 +9,9 @@ body {
     display: flex;
     align-items: center;
     gap: 20px;
-    padding: 18px 30px;
-    background: linear-gradient(90deg, #0b1d3a, #0e2a52);
+    padding: 18px 10px;
+    height: 20px;
+    background: linear-gradient(90deg,#1f2937, #0e2a52);
     border-bottom: 3px solid #c1121f; /* rojo OSAR */
   }
 
@@ -63,6 +64,7 @@ body {
     border-radius: 6px;
     text-decoration: none;
     font-weight: bold;
+    transition: background-color 0.3s ease;
   }
 
   a:hover {

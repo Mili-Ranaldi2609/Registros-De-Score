@@ -129,7 +129,7 @@
 
     button:hover {
       transform: translateY(-1px);
-      box-shadow: 0 6px 18px rgba(37, 99, 235, .4);
+      box-shadow: 0 2px 18px rgba(37, 99, 235, .4);
     }
 
     /* Estado sin registros */
