@@ -214,7 +214,14 @@ app.get("/status", (req, res) => {
     total = Math.max(lines.length - 1, 0);
 
     if (total > 0) {
-      lastUpdate = new Date(fs.statSync(filePath).mtime).toLocaleTimeString();
+      const mtime = fs.statSync(filePath).mtime;
+      lastUpdate = new Date(mtime).toLocaleTimeString("es-AR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        // ✅ Especificar la zona horaria de Buenos Aires (UTC-3)
+        timeZone: "America/Argentina/Buenos_Aires"
+      });
     }
   }
 

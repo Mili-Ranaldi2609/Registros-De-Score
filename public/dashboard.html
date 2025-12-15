@@ -387,6 +387,9 @@
 
       return { labels, data };
     }
+    const ctx = document.getElementById("chartConsultas").getContext("2d");
+    let chartConsultas = null;
+
     function actualizarGrafico(registros) {
       const { labels, data } = agruparPorHora(registros);
 
@@ -418,18 +421,7 @@
         }
       });
     }
-
-
-    async function loadData(showSpinner = true) {
-      if (showSpinner) statusEl.textContent = "Cargando datos...";
-
-      try {
-        const resp = await fetch("/logs/today");
-        const data = await resp.json();
-        actualizarGrafico(registros);
-        actualizarTendencia(registros);
-
-        function actualizarTendencia(registros) {
+    function actualizarTendencia(registros) {
           const trendEl = document.getElementById("trendText");
 
           if (registros.length < 2) {
@@ -453,6 +445,16 @@
             trendEl.className = "trend neutral";
           }
         }
+
+    async function loadData(showSpinner = true) {
+      if (showSpinner) statusEl.textContent = "Cargando datos...";
+      try {
+
+        const resp = await fetch("/logs/today");
+        const data = await resp.json();
+        const registros = data.registros || [];
+        actualizarGrafico(registros);
+        actualizarTendencia(registros);
 
         subtitleEl.textContent = "Fecha: " + formatToday();
         totalLabelEl.textContent = registros.length + " consultas";
@@ -517,30 +519,7 @@
 
     loadData(true);
   </script>
-  <script>
-    const ctx = document.getElementById("chartConsultas").getContext("2d");
-    let chartConsultas = null;
 
-    // Mini gráfico simple
-
-
-    // === TENDENCIA ===
-    const trendEl = document.getElementById("trendText");
-
-    const first = consultas[0];
-    const last = consultas[consultas.length - 1];
-
-    if (last > first) {
-      trendEl.textContent = "⬆ En aumento";
-      trendEl.className = "trend up";
-    } else if (last < first) {
-      trendEl.textContent = "⬇ En baja";
-      trendEl.className = "trend down";
-    } else {
-      trendEl.textContent = "➡ Estable";
-      trendEl.className = "trend neutral";
-    }
-  </script>
 
 </body>
 
