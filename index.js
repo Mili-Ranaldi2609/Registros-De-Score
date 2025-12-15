@@ -198,17 +198,31 @@ cron.schedule("0 23 * * *", () => {
 });
 
 /* ========================================================
-   6) RUTA PRINCIPAL
+   6) RUTA PRINCIPAL (HOME VISUAL)
    ======================================================== */
 app.get("/", (req, res) => {
-  res.send(`
-    <h1>API Registros Score ✔️</h1>
-    <p>Accesos útiles:</p>
-    <ul>
-      <li><a href="/dashboard">Dashboard</a></li>
-      <li><a href="/logs/today">Ver JSON de hoy</a></li>
-    </ul>
-  `);
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+app.get("/status", (req, res) => {
+  const filePath = getDailyFilePath();
+
+  let total = 0;
+  let lastUpdate = null;
+
+  if (fs.existsSync(filePath)) {
+    const lines = fs.readFileSync(filePath, "utf8").trim().split(/\r?\n/);
+    total = Math.max(lines.length - 1, 0);
+
+    if (total > 0) {
+      lastUpdate = new Date(fs.statSync(filePath).mtime).toLocaleTimeString();
+    }
+  }
+
+  res.json({
+    api: "OK",
+    registrosHoy: total,
+    ultimaActualizacion: lastUpdate
+  });
 });
 
 /* ========================================================
