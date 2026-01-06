@@ -1,72 +1,170 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
   <title>API Registros Score – OSAR</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="index.css">
-
 </head>
-<script>
-async function loadStatus() {
-  try {
-    const res = await fetch("/status");
-    const data = await res.json();
-
-    document.getElementById("apiStatus").textContent = "🟢 Operativo";
-    document.getElementById("count").textContent = data.registrosHoy;
-    document.getElementById("lastUpdate").textContent =
-      data.ultimaActualizacion || "Sin registros";
-  } catch {
-    document.getElementById("apiStatus").textContent = "🔴 Error";
-  }
-}
-
-loadStatus();
-setInterval(loadStatus, 30000);
-</script>
 
 <body>
 
   <header>
-    <img src="img_osar.jpg" alt="OSAR Contact Center">
-    <h1>API Registros Score</h1>
+    <div class="header-content">
+      <div class="logo-container">
+        <img src="img_osar.jpg" alt="OSAR" class="animated-logo">
+      </div>
+      <h1>API Registros Score</h1>
+    </div>
+    <div class="status-badge" id="headerStatus">En línea</div>
   </header>
 
   <main>
+    <div class="grid-container">
+      <div class="card glass-effect">
+        <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+        <h2>Dashboard</h2>
+        <p>Visualización en tiempo real de los registros capturados.</p>
+        <a href="/dashboard" class="btn-primary">Explorar datos</a>
+      </div>
 
-  <div class="card">
-    <h2>📊 Dashboard</h2>
-    <p>Visualización de registros diarios capturados por el bot.</p>
-    <a href="/dashboard">Ir al dashboard</a>
-  </div>
+      <div class="card glass-effect">
+        <div class="card-icon"><i class="fas fa-file-code"></i></div>
+        <h2>Logs del día</h2>
+        <p>Listado JSON detallado de la actividad de hoy.</p>
+        <a href="javascript:void(0)" onclick="openLogs()" class="btn-secondary">Ver registros</a>
+      </div>
 
-  <div class="card">
-    <h2>📁 Logs del día</h2>
-    <p>Listado en formato JSON de los registros cargados hoy.</p>
-    <a href="/logs/today">Ver logs de hoy</a>
-  </div>
-
-  <div class="card">
-    <h2>⚙ Estado del sistema</h2>
-    <p>
-      Estado API:
-      <strong id="apiStatus">⏳</strong><br><br>
-
-      Registros hoy:
-      <strong id="count">0</strong><br><br>
-
-      Última actualización:
-      <strong id="lastUpdate">—</strong>
-    </p>
-  </div>
-
-</main>
-
+      <div class="card glass-effect status-card">
+        <div class="card-icon"><i class="fas fa-server"></i></div>
+        <h2>Estado del Sistema</h2>
+        <div class="status-grid">
+          <div class="status-item">
+            <span>Estado API:</span>
+            <strong id="apiStatus" class="pulse-text">⏳ Cargando...</strong>
+          </div>
+          <div class="status-item">
+            <span>Registros:</span>
+            <strong id="count">0</strong>
+          </div>
+          <div class="status-item">
+            <span>Última vez:</span>
+            <strong id="lastUpdate">—</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
 
   <footer>
-    OSAR Contact Center · Sistema interno
+    <p>© 2026 OSAR Contact Center · <span class="footer-tag">Sistema Interno v2.0</span></p>
   </footer>
 
+  <script>
+    async function loadStatus() {
+      try {
+        const res = await fetch("/status");
+        const data = await res.json();
+        const statusEl = document.getElementById("apiStatus");
+
+        statusEl.innerHTML = "🟢 Operativo";
+        statusEl.classList.add("status-online");
+        document.getElementById("count").textContent = data.registrosHoy;
+        document.getElementById("lastUpdate").textContent = data.ultimaActualizacion || "Sin registros";
+      } catch {
+        document.getElementById("apiStatus").innerHTML = "🔴 Error de conexión";
+      }
+    }
+    loadStatus();
+    setInterval(loadStatus, 30000);
+    // Cambia el enlace de "Ver registros" en el HTML por esto:
+    // <a href="javascript:void(0)" onclick="openLogs()" class="btn-secondary">Ver registros</a>
+
+    async function openLogs() {
+      const modal = document.getElementById("logsModal");
+      const viewer = document.getElementById("jsonViewer");
+
+      modal.style.display = "block";
+      viewer.textContent = "Cargando registros...";
+
+      try {
+        const res = await fetch("/logs/today");
+        const data = await res.json();
+
+        // El secreto para el "formato bonito" es el 3er parámetro de JSON.stringify
+        viewer.textContent = JSON.stringify(data, null, 4);
+      } catch (error) {
+        viewer.textContent = "Error al cargar los logs: " + error;
+      }
+    }
+
+    function closeLogs() {
+      document.getElementById("logsModal").style.display = "none";
+    }
+
+    // Para cerrar si hacen clic fuera de la ventana
+    window.onclick = function (event) {
+      const modal = document.getElementById("logsModal");
+      if (event.target == modal) {
+        closeLogs();
+      }
+    }
+
+    function copyJSON() {
+      const text = document.getElementById("jsonViewer").textContent;
+      const btn = document.querySelector(".btn-copy");
+      const originalText = btn.innerHTML;
+
+      // Función para cambiar el estilo del botón (Feedback)
+      const successFeedback = () => {
+        btn.innerHTML = '<i class="fas fa-check"></i> ¡Copiado!';
+        btn.style.background = "#10b981";
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.style.background = "";
+        }, 2000);
+      };
+
+      // Intento 1: API Moderna
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(successFeedback).catch(err => fallbackCopy(text, successFeedback));
+      } else {
+        // Intento 2: Método tradicional (Fallback para HTTP/Redes locales)
+        fallbackCopy(text, successFeedback);
+      }
+    }
+
+    function fallbackCopy(text, callback) {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        callback();
+      } catch (err) {
+        alert("Error al copiar. Por favor, selecciona el texto manualmente.");
+      }
+      document.body.removeChild(textArea);
+    }
+  </script>
+  <div id="logsModal" class="modal">
+    <div class="modal-content glass-effect">
+      <div class="modal-header">
+        <h2><i class="fas fa-code"></i> Visor de Logs JSON</h2>
+        <span class="close-btn" onclick="closeLogs()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <pre id="jsonViewer"></pre>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-copy" onclick="copyJSON()">Copiar JSON</button>
+      </div>
+    </div>
+  </div>
 </body>
+
 </html>

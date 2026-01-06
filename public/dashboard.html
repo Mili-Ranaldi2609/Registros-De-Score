@@ -59,7 +59,9 @@
 
       <div class="card">
         <h3>Consultas por hora</h3>
-        <canvas id="chartConsultas" height="120"></canvas>
+        <div class="chart-container">
+          <canvas id="chartConsultas"></canvas>
+        </div>
       </div>
 
       <div class="card">
@@ -129,46 +131,77 @@
         data: {
           labels,
           datasets: [{
+            label: 'Consultas',
             data,
-            borderWidth: 2,
-            tension: 0.4
+            borderColor: '#2563eb', // Azul OSAR
+            backgroundColor: 'rgba(37, 99, 235, 0.1)', // Relleno suave
+            borderWidth: 3,
+            fill: true, // Habilita el relleno debajo de la línea
+            tension: 0.4,
+            pointRadius: 4,
+            pointBackgroundColor: '#2563eb'
           }]
         },
         options: {
+          responsive: true,
+          maintainAspectRatio: false,
           plugins: {
             legend: { display: false }
           },
           scales: {
-            x: { display: false },
-            y: { display: false }
+            x: {
+              display: true, // Ahora sí mostramos las horas
+              grid: { display: false },
+              ticks: {
+                maxRotation: 0, // Evita que las horas se inclinen
+                autoSkip: true,
+                maxTicksLimit: 8, color: '#6b7280', font: { size: 10 }
+              }
+            },
+            y: {
+              display: true,
+              beginAtZero: true,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' }, // Líneas de guía muy suaves
+              ticks: {
+                maxRotation: 0, // Evita que las horas se inclinen
+                autoSkip: true,
+                maxTicksLimit: 8,
+                color: '#6b7280',
+                font: { size: 10 },
+                stepSize: 1
+              }
+            }
           }
         }
       });
     }
     function actualizarTendencia(registros) {
-          const trendEl = document.getElementById("trendText");
+      const trendEl = document.getElementById("trendText");
+      const count = registros.length;
 
-          if (registros.length < 2) {
-            trendEl.textContent = "Sin datos suficientes";
-            trendEl.className = "trend neutral";
-            return;
-          }
+      if (count === 0) {
+        trendEl.innerHTML = "<span>--</span> Sin actividad";
+        trendEl.className = "trend neutral";
+        return;
+      }
 
-          const mitad = Math.floor(registros.length / 2);
-          const mañana = registros.slice(0, mitad).length;
-          const tarde = registros.slice(mitad).length;
+      // Dividimos el día en dos para comparar bloques de tiempo
+      const mitad = Math.floor(count / 2);
+      const bloqueA = registros.slice(0, mitad).length;
+      const bloqueB = registros.slice(mitad).length;
 
-          if (tarde > mañana) {
-            trendEl.textContent = "⬆ En aumento";
-            trendEl.className = "trend up";
-          } else if (tarde < mañana) {
-            trendEl.textContent = "⬇ En baja";
-            trendEl.className = "trend down";
-          } else {
-            trendEl.textContent = "➡ Estable";
-            trendEl.className = "trend neutral";
-          }
-        }
+      if (bloqueB > bloqueA) {
+        trendEl.innerHTML = '<i class="fas fa-arrow-trend-up"></i> Flujo en Alza';
+        trendEl.className = "trend up";
+      } else if (bloqueB < bloqueA) {
+        trendEl.innerHTML = '<i class="fas fa-arrow-trend-down"></i> Flujo en Baja';
+        trendEl.className = "trend down";
+      } else {
+        // En lugar de "Estable", usamos términos de ritmo
+        trendEl.innerHTML = '<i class="fas fa-check-circle"></i> Ritmo Constante';
+        trendEl.className = "trend neutral";
+      }
+    }
 
     async function loadData(showSpinner = true) {
       if (showSpinner) statusEl.textContent = "Cargando datos...";
