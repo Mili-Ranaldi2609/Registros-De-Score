@@ -19,9 +19,9 @@ body {
   max-width: 960px;
 }
 
+/* === HEADER & TITLES === */
 header {
   margin-bottom: 16px;
-
 }
 
 h1 {
@@ -44,6 +44,7 @@ h1 {
   align-items: center;
 }
 
+/* === PILLS & INDICATORS === */
 .pill {
   display: inline-flex;
   align-items: center;
@@ -70,6 +71,7 @@ h1 {
   box-shadow: 0 0 8px #f97316;
 }
 
+/* === ACTIONS & BUTTONS === */
 .actions {
   margin-top: 16px;
   display: flex;
@@ -89,6 +91,12 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 18px rgba(37, 99, 235, .4);
 }
 
 button.secondary {
@@ -102,17 +110,16 @@ button:disabled {
   cursor: default;
 }
 
-/* === MEJORAS VISUALES OSAR === */
-
+/* === MAIN TABLE AREA (WITH SCROLL) === */
 main {
   position: relative;
   backdrop-filter: blur(6px);
-  background: linear-gradient(180deg,
-      rgba(2, 6, 23, 0.85),
-      rgba(2, 6, 23, 0.65));
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.85), rgba(2, 6, 23, 0.65));
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-/* Línea corporativa OSAR */
+/* Línea corporativa OSAR en el tope */
 main::before {
   content: "";
   position: absolute;
@@ -121,58 +128,63 @@ main::before {
   right: 0;
   height: 3px;
   background: linear-gradient(90deg, #2563eb, #dc2626);
+  z-index: 20;
 }
 
-/* Botones más “app” */
-button {
-  transition: transform .15s ease, box-shadow .15s ease;
-}
-
-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 18px rgba(37, 99, 235, .4);
-}
-
-/* Estado sin registros */
-.empty::before {
-  content: "⏳";
-  display: block;
-  font-size: 32px;
-  margin-bottom: 8px;
-}
-
-table {
-  border-collapse: collapse;
+.table-container {
+  max-height: 300px; /* Ajusta este valor para ver más o menos filas */
+  overflow-y: auto;
+  overflow-x: auto;
   width: 100%;
 }
 
-thead {
-  background: #020617;
+/* Scrollbar personalizada */
+.table-container::-webkit-scrollbar {
+  width: 8px;
+}
+.table-container::-webkit-scrollbar-track {
+  background: rgba(2, 6, 23, 0.5);
+}
+.table-container::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 10px;
+}
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
 }
 
-th,
+/* === TABLE STYLES === */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 600px;
+}
+
+/* Header Fijo (Sticky) */
+thead th {
+  position: sticky;
+  top: 0;
+  background: #020617;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+  z-index: 10;
+  box-shadow: inset 0 -1px 0 #1f2937;
+  padding: 12px;
+  text-align: left;
+}
+
 td {
-  padding: 8px 12px;
+  padding: 10px 12px;
   font-size: 14px;
   border-bottom: 1px solid #1f2937;
   text-align: left;
   white-space: nowrap;
 }
 
-th {
-  color: #9ca3af;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 11px;
-}
-
-tr:nth-child(even) td {
-  background: #020617dd;
-}
-
-tr:nth-child(odd) td {
-  background: #020617;
-}
+tr:nth-child(even) td { background: #020617dd; }
+tr:nth-child(odd) td { background: #020617; }
 
 .dni {
   font-family: "Fira Code", ui-monospace;
@@ -183,32 +195,24 @@ tr:nth-child(odd) td {
   font-weight: 600;
 }
 
-.score.high {
-  color: #22c55e;
-}
-
-.score.mid {
-  color: #eab308;
-}
-
-.score.low {
-  color: #f97316;
-}
-
-.score.very-low {
-  color: #f87171;
-}
-
 .registro {
   white-space: normal;
   max-width: 460px;
 }
 
+/* === FOOTER & EMPTY STATE === */
 .empty {
-  padding: 24px 20px;
+  padding: 48px 20px;
   text-align: center;
   font-size: 14px;
   color: #9ca3af;
+}
+
+.empty::before {
+  content: "⏳";
+  display: block;
+  font-size: 32px;
+  margin-bottom: 8px;
 }
 
 .footer {
@@ -219,24 +223,10 @@ tr:nth-child(odd) td {
   justify-content: space-between;
   align-items: center;
   background: #020617;
+  border-top: 1px solid #1f2937;
 }
 
-#total-label strong {
-  font-size: 16px;
-}
-
-@media (max-width: 640px) {
-
-  th:nth-child(3),
-  td:nth-child(3) {
-    display: none;
-  }
-
-  .registro {
-    max-width: 220px;
-  }
-}
-
+/* === ANALYTICS CARDS === */
 .analytics {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -252,12 +242,10 @@ tr:nth-child(odd) td {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
-  /* Estas dos líneas son la clave */
-  height: 250px; 
-  overflow: hidden; 
+  height: 250px;
+  overflow: hidden;
 }
 
-/* Contenedor específico para el canvas */
 .chart-container {
   position: relative;
   flex-grow: 1;
@@ -270,17 +258,27 @@ tr:nth-child(odd) td {
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: #9ca3af;
-  /* Color más discreto para el título */
-}
-/* Actualiza esto en tu CSS */
-.trend {
-  justify-content: center; /* Centra el contenido horizontalmente */
-  text-align: center;
-  flex-grow: 1; /* Hace que ocupe el espacio disponible en la card */
-  font-size: 24px; 
-  text-shadow: 0 0 20px rgba(251, 191, 36, 0.3); /* Un brillo sutil para el estado neutral */
 }
 
-.trend i {
-  font-size: 0.8em; /* El icono un pelín más chico que el texto */
+.trend {
+  justify-content: center;
+  text-align: center;
+  flex-grow: 1;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .analytics {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  th:nth-child(3), td:nth-child(3) {
+    display: none;
+  }
 }

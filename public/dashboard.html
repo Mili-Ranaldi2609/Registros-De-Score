@@ -36,16 +36,19 @@
     </header>
 
     <main>
-      <table id="table" style="display:none;">
-        <thead>
-          <tr>
-            <th>DNI</th>
-            <th>Score</th>
-            <th>Registro</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
+      <div class="table-container" id="tableWrapper" style="display:none;">
+        <table id="table">
+          <thead>
+            <tr>
+              <th>DNI</th>
+              <th>Score</th>
+              <th>Registro</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
 
       <div id="empty" class="empty" style="display:none;">
         Todavía no hay registros para hoy.<br />
@@ -209,10 +212,13 @@
     async function loadData(showSpinner = true) {
       if (showSpinner) statusEl.textContent = "Cargando datos...";
       try {
-
         const resp = await fetch("/logs/today");
         const data = await resp.json();
         const registros = data.registros || [];
+
+        // Referencia al contenedor del scroll
+        const tableWrapper = document.getElementById("tableWrapper");
+
         actualizarGrafico(registros);
         actualizarTendencia(registros);
 
@@ -221,16 +227,21 @@
         fileNameEl.textContent = data.file || "";
 
         if (registros.length === 0) {
-          tableEl.style.display = "none";
+          // Si no hay datos, ocultamos todo
+          tableWrapper.style.display = "none";
           emptyEl.style.display = "block";
           pillEmptyEl.style.display = "inline-flex";
         } else {
+          // ¡AQUÍ ESTABA EL ERROR! Mostramos el contenedor y la tabla
           emptyEl.style.display = "none";
           pillEmptyEl.style.display = "none";
+          tableWrapper.style.display = "block"; // Activamos el contenedor del scroll
           tableEl.style.display = "table";
 
           tbodyEl.innerHTML = "";
-          registros.forEach(reg => {
+
+          // Usamos .reverse() para que los más nuevos salgan arriba como en tu VS Code
+          [...registros].reverse().forEach(reg => {
             const tr = document.createElement("tr");
 
             const tdDni = document.createElement("td");
@@ -240,6 +251,10 @@
             const tdScore = document.createElement("td");
             tdScore.className = "score";
             tdScore.textContent = reg.score;
+
+            // Color automático al score
+            if (reg.score >= 700) tdScore.style.color = "#22c55e";
+            else if (reg.score <= 300) tdScore.style.color = "#f87171";
 
             const tdReg = document.createElement("td");
             tdReg.className = "registro";
@@ -255,12 +270,11 @@
         statusEl.textContent =
           "Actualizado: " + new Date().toLocaleTimeString('es-AR', { hour12: false }) + " · Sistema operativo";
 
-
       } catch (err) {
+        console.error(err);
         statusEl.textContent = "Error cargando datos";
       }
     }
-
     btnRefresh.addEventListener("click", () => loadData(true));
 
     btnAuto.addEventListener("click", () => {
