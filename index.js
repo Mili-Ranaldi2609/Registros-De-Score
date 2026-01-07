@@ -198,7 +198,7 @@ app.get('/download/today', (req, res) => {
 /* ========================================================
    5) Crear archivo nuevo a las 22:00 si no existe
    ======================================================== */
-cron.schedule("0 23* * *", () => {
+cron.schedule("0 22 * * *", () => {
   const filePath = getDailyFilePath();
   const header = "dni,score,registro\n";
 
