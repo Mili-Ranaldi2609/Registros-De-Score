@@ -29,6 +29,9 @@
       <div class="actions">
         <button id="btnRefresh">↻ Actualizar</button>
         <button id="btnAuto" class="secondary">▶ Auto-refresco (30s)</button>
+        <a href="/download/today" class="button-download" style="text-decoration: none;">
+          <button style="background: #10b981;">📥 Descargar CSV</button>
+        </a>
       </div>
     </header>
 
@@ -250,7 +253,7 @@
         }
 
         statusEl.textContent =
-          "Actualizado: " + new Date().toLocaleTimeString() + " · Sistema operativo";
+          "Actualizado: " + new Date().toLocaleTimeString('es-AR', { hour12: false }) + " · Sistema operativo";
 
 
       } catch (err) {

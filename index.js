@@ -183,11 +183,22 @@ app.get("/test-email", async (req, res) => {
   }
 });
 
+// descargar csv manualmente desde la pagina 
+app.get('/download/today', (req, res) => {
+    // Aquí usamos la lógica que ya tienes para obtener el nombre del archivo del día
+    const fileName = `logs_${new Date().toISOString().slice(0, 10)}.csv`;
+    const filePath = path.join(__dirname, 'data', fileName);
 
+    res.download(filePath, fileName, (err) => {
+        if (err) {
+            res.status(404).send("El archivo de hoy aún no ha sido creado.");
+        }
+    });
+});
 /* ========================================================
-   5) Crear archivo nuevo a las 23:00 si no existe
+   5) Crear archivo nuevo a las 22:00 si no existe
    ======================================================== */
-cron.schedule("0 23 * * *", () => {
+cron.schedule("0 23* * *", () => {
   const filePath = getDailyFilePath();
   const header = "dni,score,registro\n";
 
